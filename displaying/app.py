@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_jwt_extended import JWTExtended, jwt_required, create_access_token
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token
 from flask_mysqldb import MySQL
 from datetime import timedelta
 from dotenv import load_dotenv
