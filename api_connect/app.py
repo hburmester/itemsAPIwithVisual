@@ -16,10 +16,10 @@ app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
 app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
 app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
 app.config['MYSQL_UNIX_SOCKET'] = os.getenv('MYSQL_UNIX_SOCKET')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=30)
 
 # Flask-JWT-Extended Configuration
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=30)
 jwt = JWTManager(app)
 
 mysql = MySQL(app)
@@ -187,6 +187,3 @@ def delete_item(cursor, item_id):
     cursor.execute("DELETE FROM items WHERE id = %s", (item_id,))
 
     return jsonify({'message': 'Item deleted successfully'})
-
-if __name__ == '__main__':
-    app.run(debug=True)
