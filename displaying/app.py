@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template, redirect, make_response
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, get_csrf_token
 from datetime import timedelta
 from dotenv import load_dotenv
 from flask_mysqldb import MySQL
@@ -65,24 +65,36 @@ def login():
 
         if user:
             access_token = create_access_token(identity=username)
-            response = make_response(redirect('/visual/items'))
-            response.set_cookie('access_token', value=access_token, httponly=True, secure=False)
-            return response
+            return redirect('/visual/items')
         
     return render_template("login.html")
 
 @app.route('/visual/items', methods=['GET'])
-@jwt_required()
+# @jwt_required()
 def display_items():
+    # # Authorization logic can be added here based on user roles
+    # current_user = get_jwt_identity()
+    # # Example: Allow only me to access this endpoint
+    # if current_user != 'hburmester':
+    #     return render_template('unauthorized.html'), 403
 
-    # Authorization logic can be added here based on user roles
-    current_user = get_jwt_identity()
-    # Example: Allow only me to access this endpoint
-    if current_user != 'hburmester':
-        return render_template('unauthorized.html'), 403
+    try:
+        # Establish a database connection
+        cur = mysql.connection.cursor()
+        
+        # Execute the query
+        cur.execute("SELECT * FROM items")
+        
+        # Fetch all items
+        items = cur.fetchall()
 
-    cur = mysql.connect.cursor()
-    cur.execute("SELECT * FROM items")
-    items = cur.fetchall()
-    cur.close()
-    return render_template('items.html', items=items)
+        # Close the cursor
+        cur.close()
+
+        # Render the template with the items data
+        return render_template("items.html", items=items)
+    except Exception as e:
+        # Print the exception for debugging
+        print(f"Error fetching items: {str(e)}")
+        # Return an error template or message
+        return render_template("error.html", error_message="Error fetching items")
