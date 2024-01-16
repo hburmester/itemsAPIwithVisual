@@ -85,13 +85,15 @@ def display_items():
 
         return render_template("error.html", error_message="Error fetching items")
     
-@app.route('/visual/create', methods=['POST'])
+@app.route('/visual/create', methods=['POST', 'GET'])
 def create_item():
-    try:
-        name = request.form.get('name')
-        description = request.form.get('description')
+    if request.method == 'POST':
+        try:
+            name = request.form.get('name')
+            description = request.form.get('description')
 
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO items (name, description) VALUES (name, description);", (name, description))
-    except Exception as e:
-        return render_template("error.html", error_message="Error creating item")
+            cur = mysql.connection.cursor()
+            cur.execute("INSERT INTO items (name, description) VALUES (name, description);", (name, description))
+        except Exception as e:
+            return render_template("error.html", error_message="Error creating item")
+    return render_template("create.html")
