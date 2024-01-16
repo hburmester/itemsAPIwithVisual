@@ -93,3 +93,5 @@ def create_item():
 
         cur = mysql.connection.cursor()
         cur.execute("INSERT INTO items (name, description) VALUES (name, description);", (name, description))
+    except Exception as e:
+        return render_template("error.html", error_message="Error creating item")
