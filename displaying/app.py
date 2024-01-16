@@ -1,13 +1,21 @@
-from flask import Flask, request, jsonify, render_template, redirect
+from flask import Flask, request, render_template, redirect, make_response
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from datetime import timedelta
 from dotenv import load_dotenv
-from db import mysql
+from flask_mysqldb import MySQL
 import os
 
 load_dotenv()
 
 app = Flask(__name__)
+
+app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
+app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
+app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
+app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
+app.config['MYSQL_UNIX_SOCKET'] = os.getenv('MYSQL_UNIX_SOCKET')
+
+mysql = MySQL(app)
 
 # Flask-JWT-Extended Configuration
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
@@ -53,12 +61,13 @@ def login():
 
         cursor = mysql.connection.cursor()
         user = cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))
-        cursor.commit()
         cursor.close()
 
         if user:
             access_token = create_access_token(identity=username)
-            return jsonify(access_token=access_token), 200
+            response = make_response(redirect('/visual/items'))
+            response.set_cookie('access_token', value=access_token, httponly=True, secure=False)
+            return response
         
     return render_template("login.html")
 
