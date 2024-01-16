@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, make_response
+from flask import Flask, request, render_template, redirect, make_response, jsonify
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, get_csrf_token
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -72,29 +72,24 @@ def login():
 @app.route('/visual/items', methods=['GET'])
 # @jwt_required()
 def display_items():
-    # # Authorization logic can be added here based on user roles
-    # current_user = get_jwt_identity()
-    # # Example: Allow only me to access this endpoint
-    # if current_user != 'hburmester':
-    #     return render_template('unauthorized.html'), 403
-
     try:
-        # Establish a database connection
         cur = mysql.connection.cursor()
-        
-        # Execute the query
         cur.execute("SELECT * FROM items")
-        
-        # Fetch all items
         items = cur.fetchall()
-
-        # Close the cursor
         cur.close()
 
-        # Render the template with the items data
-        return render_template("items.html", items=items)
+        return render_template('items.html', items=items)
+    
     except Exception as e:
-        # Print the exception for debugging
         print(f"Error fetching items: {str(e)}")
-        # Return an error template or message
+
         return render_template("error.html", error_message="Error fetching items")
+    
+@app.route('/visual/create', methods=['POST'])
+def create_item():
+    try:
+        name = request.form.get('name')
+        description = request.form.get('description')
+
+        cur = mysql.connection.cursor()
+        cur.execute("INSERT INTO items (name, description) VALUES (name, description);", (name, description))
