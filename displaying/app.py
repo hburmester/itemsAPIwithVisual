@@ -1,5 +1,5 @@
-from flask import Flask, request, render_template, redirect, make_response, jsonify, url_for
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, get_csrf_token
+from flask import Flask, request, render_template, redirect, make_response
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, set_access_cookies
 from datetime import timedelta
 from dotenv import load_dotenv
 from flask_mysqldb import MySQL
@@ -19,6 +19,9 @@ mysql = MySQL(app)
 
 # Flask-JWT-Extended Configuration
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+app.config['JWT_COOKIE_SECURE'] = True
+app.config['JWT_COOKIE_HTTPONLY'] = True
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=30)
 jwt = JWTManager(app)
 
@@ -65,7 +68,9 @@ def login():
 
         if user:
             access_token = create_access_token(identity=username)
-            return redirect('/visual/items')
+            response = make_response(redirect('/visual/items/'))
+            set_access_cookies(response, access_token)
+            return response
         
     return render_template("login.html")
 
