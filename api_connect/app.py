@@ -5,88 +5,43 @@ from datetime import timedelta
 from functools import wraps
 from dotenv import load_dotenv
 import os
+from db import app, mysql, jwt, commit_query_decorator
 
-load_dotenv()
+# def commit_query_decorator(route_function):
+#     @wraps(route_function)
+#     def wrapper(*args, **kwargs):
+#         cursor = None
+#         try:
+#             # Create a cursor
+#             cursor = mysql.connection.cursor()
 
-app = Flask(__name__)
+#             # Call the original route function
+#             response = route_function(cursor, *args, **kwargs)
 
-# MySQL Configuration
-app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
-app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
-app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
-app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
-app.config['MYSQL_UNIX_SOCKET'] = os.getenv('MYSQL_UNIX_SOCKET')
+#             # Commit the transaction
+#             mysql.connection.commit()
 
-# Flask-JWT-Extended Configuration
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=30)
-jwt = JWTManager(app)
+#             # Verify that the query has committed
+#             print("\n" + "Query has committed successfully!" + "\n")
 
-mysql = MySQL(app)
+#             # Continue with the original response from the route function
+#             return response
 
-def commit_query_decorator(route_function):
-    @wraps(route_function)
-    def wrapper(*args, **kwargs):
-        cursor = None
-        try:
-            # Create a cursor
-            cursor = mysql.connection.cursor()
+#         except Exception as e:
+#             print(f'Error executing query: {str(e)}')
+#             return jsonify(error=f'Error executing query: {str(e)}')
 
-            # Call the original route function
-            response = route_function(cursor, *args, **kwargs)
+#         finally:
+#             # Close the cursor only if it was successfully created
+#             if cursor:
+#                 cursor.close()
 
-            # Commit the transaction
-            mysql.connection.commit()
-
-            # Verify that the query has committed
-            print("\n" + "Query has committed successfully!" + "\n")
-
-            # Continue with the original response from the route function
-            return response
-
-        except Exception as e:
-            print(f'Error executing query: {str(e)}')
-            return jsonify(error=f'Error executing query: {str(e)}')
-
-        finally:
-            # Close the cursor only if it was successfully created
-            if cursor:
-                cursor.close()
-
-    return wrapper
-
-# Create a sample table for demonstration
-with app.app_context():
-    cur = mysql.connection.cursor()
-    cur.execute("""
-                DROP TABLE IF EXISTS items
-                """)
-    cur.execute("""
-                DROP TABLE IF EXISTS users
-                """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS items (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255),
-            description TEXT
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(255),
-            password TEXT
-        )
-    """)
-    cur.execute("""INSERT INTO users (username, password) VALUES ("hburmester", "polo1234");""")
-    cur.execute("""INSERT INTO items (name, description) VALUES ("something", "works");""")
-    mysql.connection.commit()
-    cur.close()
+#     return wrapper
 
 # Authentication Endpoint
 @app.route('/api/login', methods=['POST'])
 @commit_query_decorator
-def login(cursor):
+def login_api(cursor):
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
@@ -103,13 +58,13 @@ def login(cursor):
 
 # Welcome Page Endpoint
 @app.route('/', methods=['GET'])
-def welcome():
+def welcome_api():
     return jsonify({'Welcome': 'Page'})
 
 # Protected Endpoint Example
 @app.route('/api/protected', methods=['GET'])
 @jwt_required()
-def protected():
+def protected_api():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
@@ -117,7 +72,7 @@ def protected():
 @app.route('/api/resource', methods=['GET'])
 @jwt_required()
 @commit_query_decorator
-def get_all_items(cursor):
+def get_all_items_api(cursor):
 
     # Authorization logic can be added here based on user roles
     current_user = get_jwt_identity()
@@ -133,7 +88,7 @@ def get_all_items(cursor):
 @app.route('/api/resource/<int:item_id>', methods=['GET'])
 @jwt_required()
 @commit_query_decorator
-def get_item(cursor, item_id):
+def get_item_api(cursor, item_id):
     cursor.execute("SELECT * FROM items WHERE id = %s", (item_id,))
     item = cursor.fetchone()
     if item:
@@ -145,7 +100,7 @@ def get_item(cursor, item_id):
 @app.route('/api/resource', methods=['POST'])
 @jwt_required()
 @commit_query_decorator
-def create_item(cursor):
+def create_item_api(cursor):
     data = request.get_json()
     name = data.get('name')
     description = data.get('description')
@@ -158,7 +113,7 @@ def create_item(cursor):
 @app.route('/api/resource/<int:item_id>', methods=['PUT'])
 @jwt_required()
 @commit_query_decorator
-def update_item(cursor, item_id):
+def update_item_api(cursor, item_id):
     data = request.get_json()
     name = data.get('name')
     description = data.get('description')
@@ -171,7 +126,7 @@ def update_item(cursor, item_id):
 @app.route('/api/resource/<int:item_id>', methods=['PATCH'])
 @jwt_required()
 @commit_query_decorator
-def partial_update_item(cursor, item_id):
+def partial_update_item_api(cursor, item_id):
     data = request.get_json()
     description = data.get('description')
 
@@ -183,7 +138,7 @@ def partial_update_item(cursor, item_id):
 @app.route('/api/resource/<int:item_id>', methods=['DELETE'])
 @jwt_required()
 @commit_query_decorator
-def delete_item(cursor, item_id):
+def delete_item_api(cursor, item_id):
     cursor.execute("DELETE FROM items WHERE id = %s", (item_id,))
 
     return jsonify({'message': 'Item deleted successfully'})

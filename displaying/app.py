@@ -4,53 +4,7 @@ from datetime import timedelta
 from dotenv import load_dotenv
 from flask_mysqldb import MySQL
 import os
-
-load_dotenv()
-
-app = Flask(__name__)
-
-app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
-app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
-app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
-app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
-app.config['MYSQL_UNIX_SOCKET'] = os.getenv('MYSQL_UNIX_SOCKET')
-
-mysql = MySQL(app)
-
-# Flask-JWT-Extended Configuration
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
-app.config['JWT_TOKEN_LOCATION'] = ['cookies']
-app.config['JWT_COOKIE_SECURE'] = True
-app.config['JWT_COOKIE_HTTPONLY'] = True
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=30)
-jwt = JWTManager(app)
-
-with app.app_context():
-    cur = mysql.connection.cursor()
-    cur.execute("""
-                DROP TABLE IF EXISTS items
-                """)
-    cur.execute("""
-                DROP TABLE IF EXISTS users
-                """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS items (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255),
-            description TEXT
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(255),
-            password TEXT
-        )
-    """)
-    cur.execute("""INSERT INTO users (username, password) VALUES ("hburmester", "polo1234");""")
-    cur.execute("""INSERT INTO items (name, description) VALUES ("something", "works");""")
-    mysql.connection.commit()
-    cur.close()
+from db import app, mysql, jwt
 
 @app.route('/')
 def home():
@@ -68,9 +22,7 @@ def login():
 
         if user:
             access_token = create_access_token(identity=username)
-            response = make_response(redirect('/visual/items/'))
-            set_access_cookies(response, access_token)
-            return response
+            return redirect('/visual/items')
         
     return render_template("login.html")
 
