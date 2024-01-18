@@ -1,42 +1,6 @@
-from flask import Flask, request, jsonify
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
-from flask_mysqldb import MySQL
-from datetime import timedelta
-from functools import wraps
-from dotenv import load_dotenv
-import os
+from flask import request, jsonify
+from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from db import app, mysql, jwt, commit_query_decorator
-
-# def commit_query_decorator(route_function):
-#     @wraps(route_function)
-#     def wrapper(*args, **kwargs):
-#         cursor = None
-#         try:
-#             # Create a cursor
-#             cursor = mysql.connection.cursor()
-
-#             # Call the original route function
-#             response = route_function(cursor, *args, **kwargs)
-
-#             # Commit the transaction
-#             mysql.connection.commit()
-
-#             # Verify that the query has committed
-#             print("\n" + "Query has committed successfully!" + "\n")
-
-#             # Continue with the original response from the route function
-#             return response
-
-#         except Exception as e:
-#             print(f'Error executing query: {str(e)}')
-#             return jsonify(error=f'Error executing query: {str(e)}')
-
-#         finally:
-#             # Close the cursor only if it was successfully created
-#             if cursor:
-#                 cursor.close()
-
-#     return wrapper
 
 # Authentication Endpoint
 @app.route('/api/login', methods=['POST'])

@@ -1,25 +1,23 @@
-from flask import Flask, request, render_template, redirect, make_response
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, set_access_cookies
-from datetime import timedelta
-from dotenv import load_dotenv
+from flask import request, render_template, redirect
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token
 from flask_mysqldb import MySQL
 import os
-from db import app, mysql, jwt
+from db import app, mysql, jwt, commit_query_decorator
 
 @app.route('/')
 def home():
     return redirect('/visual/login')
 
 @app.route('/visual/login', methods=['POST', 'GET'])
-def login():
+@commit_query_decorator
+def login(cursor):
     if request.method == "POST":
         username = request.form.get('username')
         password = request.form.get('password')
 
-        cursor = mysql.connection.cursor()
-        user = cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))
-        cursor.close()
-
+        cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))
+        user = cursor.fetchone()
+        
         if user:
             access_token = create_access_token(identity=username)
             return redirect('/visual/items')
