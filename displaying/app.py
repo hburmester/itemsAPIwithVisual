@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, make_response, jsonify
+from flask import Flask, request, render_template, redirect, make_response, jsonify, url_for
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, get_csrf_token
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -89,11 +89,26 @@ def display_items():
 def create_item():
     if request.method == 'POST':
         try:
-            name = request.form.get('name')
-            description = request.form.get('description')
+            name = request.form['name']
+            description = request.form['description']
 
             cur = mysql.connection.cursor()
-            cur.execute("INSERT INTO items (name, description) VALUES (name, description);", (name, description))
+            cur.execute("INSERT INTO items (name, description) VALUES (%s, %s)", (name, description))
+            mysql.connection.commit()
+            cur.close()
+            return redirect('/visual/items')
         except Exception as e:
-            return render_template("error.html", error_message="Error creating item")
+            return render_template("items.html", error_message="Error creating item")
     return render_template("create.html")
+
+@app.route('/visual/delete/<id>', methods=['DELETE'])
+def delete_item(id):
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("DELETE FROM items WHERE id = %s", id)
+        mysql.connection.commit()
+        cur.close()
+
+        return ''
+    except Exception as e:
+        return ''

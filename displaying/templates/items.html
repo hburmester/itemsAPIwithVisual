@@ -24,6 +24,7 @@
                     <th>ID</th>
                     <th>Name</th>
                     <th>Description</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -32,15 +33,50 @@
                         <td>{{ item[0] }}</td>
                         <td>{{ item[1] }}</td>
                         <td>{{ item[2] }}</td>
+                        <td>
+                            <div class="text-center">
+                                <button class="btn btn-danger btn-lg" onclick="deleteItem('{{ item[0] }}')">
+                                    <a class="fas fa-trash-alt"></a> Delete
+                                </button>
+                            </div>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    <div class="text-center">
+        <button class="btn btn-primary btn-lg" onclick="redirectToTemplate()">Create Item</button>
+    </div>
+
+    <script>
+        function redirectToTemplate() {
+            window.location.href = '/visual/create';
+        }
+    </script>
+
+    <script>
+        function deleteItem(id) {
+            $.ajax({
+            url: '/visual/delete/' + id,
+            type: 'DELETE',
+            success: function(response) {
+                // Handle the response if needed
+                console.log(response);
+            },
+            error: function(error) {
+                // Handle the error if needed
+                console.error(error);
+            }  
+        });
+            window.location.href = '/visual/items';
+        }
+    </script>
 
     <!-- Include Bootstrap JS and jQuery -->
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 </body>
 </html>
