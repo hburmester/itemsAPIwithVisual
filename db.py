@@ -19,7 +19,10 @@ app.config['MYSQL_UNIX_SOCKET'] = os.getenv('MYSQL_UNIX_SOCKET')
 
 # Flask-JWT-Extended Configuration
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=30)
+app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+app.config['JWT_COOKIE_SECURE'] = True
+app.config['JWT_COOKIE_HTTPONLY'] = True
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=10)
 
 jwt = JWTManager(app)
 

@@ -1,5 +1,5 @@
-from flask import request, render_template, redirect
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token
+from flask import request, render_template, redirect, make_response
+from flask_jwt_extended import jwt_required, create_access_token, set_access_cookies
 from flask_mysqldb import MySQL
 import os
 from db import app, mysql, jwt, commit_query_decorator
@@ -20,18 +20,21 @@ def login(cursor):
         
         if user:
             access_token = create_access_token(identity=username)
-            return redirect('/visual/items')
+            # Set the JWT token in the cookie
+            response = make_response(redirect('/visual/items'))
+            set_access_cookies(response, access_token)
+            
+            return response
         
     return render_template("login.html")
 
 @app.route('/visual/items', methods=['GET'])
-# @jwt_required()
-def display_items():
+@commit_query_decorator
+@jwt_required()
+def display_items(cursor):
     try:
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM items")
-        items = cur.fetchall()
-        cur.close()
+        cursor.execute("SELECT * FROM items")
+        items = cursor.fetchall()
 
         return render_template('items.html', items=items)
     
@@ -41,28 +44,27 @@ def display_items():
         return render_template("error.html", error_message="Error fetching items")
     
 @app.route('/visual/create', methods=['POST', 'GET'])
-def create_item():
+@commit_query_decorator
+@jwt_required()
+def create_item(cursor):
     if request.method == 'POST':
         try:
             name = request.form['name']
             description = request.form['description']
 
-            cur = mysql.connection.cursor()
-            cur.execute("INSERT INTO items (name, description) VALUES (%s, %s)", (name, description))
-            mysql.connection.commit()
-            cur.close()
+            cursor.execute("INSERT INTO items (name, description) VALUES (%s, %s)", (name, description))
+
             return redirect('/visual/items')
         except Exception as e:
             return render_template("items.html", error_message="Error creating item")
     return render_template("create.html")
 
 @app.route('/visual/delete/<id>', methods=['DELETE'])
-def delete_item(id):
+@commit_query_decorator
+@jwt_required()
+def delete_item(cursor, id):
     try:
-        cur = mysql.connection.cursor()
-        cur.execute("DELETE FROM items WHERE id = %s", id)
-        mysql.connection.commit()
-        cur.close()
+        cursor.execute("DELETE FROM items WHERE id = %s", id)
 
         return ''
     except Exception as e:
